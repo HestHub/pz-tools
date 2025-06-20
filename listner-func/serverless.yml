@@ -1,0 +1,34 @@
+service: pzfunc
+configValidationMode: off
+provider:
+  name: scaleway
+  runtime: go124
+  scwRegion: ${env:SCW_DEFAULT_REGION}
+
+useDotenv: true
+
+plugins:
+  - serverless-scaleway-functions
+
+package:
+  patterns:
+    - "!node_modules/**"
+    - "!.gitignore"
+    - "!.git/**"
+
+functions:
+  pzfunc:
+    handler: Handler
+    privacy: private
+
+    minScale: 0
+    maxScale: 1
+    memoryLimit: 128
+
+    secret:
+      SCW_DEFAULT_ORGANIZATION_ID: ${env:SCW_DEFAULT_ORGANIZATION_ID}
+      SCW_ACCESS_KEY: ${env:SCW_ACCESS_KEY}
+      SCW_SECRET_KEY: ${env:SCW_SECRET_KEY}
+      SCW_DEFAULT_ZONE: ${env:SCW_DEFAULT_ZONE}
+      SCW_DEFAULT_REGION: ${env:SCW_DEFAULT_REGION}
+      INSTANCE_NAME: ${env:INSTANCE_NAME}

@@ -1,0 +1,7 @@
+keys:
+  - &mbp age1rmtegy5mdesqdk2rf6x7ear0e69f5fy9lf42vkej23jxfrf0fclqcegsn0
+  - &nixos age1djqgnlfj2vxxhhm5m99ykpmq97d97vggt8rrflqtme5ty94px9hsqzgne4
+creation_rules:
+  - path_regex: .env$
+    key_groups:
+      - age: [*mbp, *nixos]
