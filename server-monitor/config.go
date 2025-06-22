@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"time"
@@ -38,9 +39,9 @@ type Config struct {
 	Api          instance.API
 }
 
-var log slog.Logger
+var Log *slog.Logger
 
-func loadConfig() Config {
+func LoadConfig() Config {
 	godotenv.Load()
 	setLog()
 
@@ -59,7 +60,7 @@ func loadConfig() Config {
 
 	for idx := range mandatoryVariables {
 		if os.Getenv(mandatoryVariables[idx]) == "" {
-			log.Error("Failed to execute SSH command",
+			Log.Error("Failed to execute SSH command",
 				"missing", mandatoryVariables[idx],
 				"operation", "loadConfig")
 			os.Exit(1)
@@ -71,7 +72,7 @@ func loadConfig() Config {
 		scw.WithDefaultRegion(scw.Region(os.Getenv(envRegion))),
 	)
 	if err != nil {
-		log.Error("Failed to create scw client",
+		Log.Error("Failed to create scw client",
 			"error", err,
 			"operation", "loadConfig")
 		os.Exit(1)
@@ -98,14 +99,14 @@ func setLog() {
 	today := time.Now().Format("01-02")
 	logFileName := fmt.Sprintf("logs/%s.log", today)
 
-	logFile, err := os.OpenFile(logFileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	logFile, err := os.OpenFile(logFileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		panic(err)
 	}
-	defer logFile.Close()
+	wrt := io.MultiWriter(os.Stdout, logFile)
 
-	handler := slog.NewTextHandler(logFile, nil)
-	log := slog.New(handler)
+	handler := slog.NewTextHandler(wrt, nil)
+	Log = slog.New(handler)
 
-	slog.SetDefault(log)
+	slog.SetDefault(Log)
 }
