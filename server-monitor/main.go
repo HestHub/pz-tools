@@ -14,10 +14,15 @@ import (
 func main() {
 	config := LoadConfig()
 
+	discord := config.Discord
+
+	discord.Open()
+
+	defer discord.Close()
+
 	counter := 0
 	for counter < 10 {
 		output := rconCmd(config, "players")
-
 		Log.Info(output, slog.Int("counter", counter))
 
 		if strings.Contains(output, config.Rcon.state) {
@@ -32,15 +37,18 @@ func main() {
 
 	err := powerOff(config)
 	if err != nil {
+		discord.ChannelMessageSend(config.ChannelID, "Failed to stop server: "+err.Error())
 		panic("Failed to shut off server")
 	}
 }
 
 func powerOff(cfg Config) error {
+	discord := cfg.Discord
 	response, err := cfg.Api.ListServers(&instance.ListServersRequest{
 		Zone: scw.Zone(cfg.Zone),
 	})
 	if err != nil {
+		discord.ChannelMessageSend(cfg.ChannelID, "Failed to list server: "+err.Error())
 		Log.Error("Failed to list servers",
 			"error", err,
 			"operation", "poweroff")
@@ -48,6 +56,7 @@ func powerOff(cfg Config) error {
 	}
 
 	if response.TotalCount != 1 || response.Servers[0].Name != cfg.InstanceName {
+		discord.ChannelMessageSend(cfg.ChannelID, "Instance not found:")
 		Log.Error("could not find the instance, abort operation",
 			"operation", "poweroff")
 		return err
@@ -56,6 +65,7 @@ func powerOff(cfg Config) error {
 	server := response.Servers[0]
 
 	if !slices.Contains(server.AllowedActions, "poweroff") {
+		discord.ChannelMessageSend(cfg.ChannelID, "Failed perform action: "+err.Error())
 		Log.Error("server action not available: poweroff",
 			"operation", "poweroff")
 		return err

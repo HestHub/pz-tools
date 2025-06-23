@@ -3,9 +3,13 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"log/slog"
 	"os"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
+	_ "github.com/bwmarrin/discordgo"
 
 	"github.com/joho/godotenv"
 	"github.com/scaleway/scaleway-sdk-go/api/instance/v1"
@@ -13,16 +17,18 @@ import (
 )
 
 const (
-	envOrgID        = "SCW_DEFAULT_ORGANIZATION_ID"
-	envAccessKey    = "SCW_ACCESS_KEY"
-	envSecretKey    = "SCW_SECRET_KEY"
-	envRegion       = "SCW_DEFAULT_REGION"
-	envZone         = "SCW_DEFAULT_ZONE"
-	envInstanceName = "INSTANCE_NAME"
-	envRconPwd      = "RCON_PWD"
-	envRconAddr     = "RCON_ADDR"
-	envRconState    = "RCON_STATE"
-	envRconPath     = "RCON_PATH"
+	envOrgID            = "SCW_DEFAULT_ORGANIZATION_ID"
+	envAccessKey        = "SCW_ACCESS_KEY"
+	envSecretKey        = "SCW_SECRET_KEY"
+	envRegion           = "SCW_DEFAULT_REGION"
+	envZone             = "SCW_DEFAULT_ZONE"
+	envInstanceName     = "INSTANCE_NAME"
+	envRconPwd          = "RCON_PWD"
+	envRconAddr         = "RCON_ADDR"
+	envRconState        = "RCON_STATE"
+	envRconPath         = "RCON_PATH"
+	envDiscordToken     = "DISCORD_TOKEN"
+	envDiscordChannelId = "DISCORD_PRIVATE_CHANNELD"
 )
 
 type RCON struct {
@@ -37,6 +43,8 @@ type Config struct {
 	InstanceName string
 	Zone         string
 	Api          instance.API
+	Discord      *discordgo.Session
+	ChannelID    string
 }
 
 var Log *slog.Logger
@@ -56,6 +64,8 @@ func LoadConfig() Config {
 		envRconState,
 		envRconState,
 		envInstanceName,
+		envDiscordToken,
+		envDiscordChannelId,
 	}
 
 	for idx := range mandatoryVariables {
@@ -78,6 +88,11 @@ func LoadConfig() Config {
 		os.Exit(1)
 	}
 
+	discord, err := discordgo.New("Bot " + os.Getenv(envDiscordToken))
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return Config{
 		Rcon: RCON{
 			path:  os.Getenv(envRconPath),
@@ -85,6 +100,8 @@ func LoadConfig() Config {
 			addr:  os.Getenv(envRconAddr),
 			pwd:   os.Getenv(envRconPwd),
 		},
+		Discord:      discord,
+		ChannelID:    os.Getenv(envDiscordChannelId),
 		InstanceName: os.Getenv(envInstanceName),
 		Zone:         os.Getenv(envZone),
 		Api:          *instance.NewAPI(client),

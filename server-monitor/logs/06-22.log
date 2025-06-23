@@ -1,0 +1,2 @@
+time=2025-06-22T22:57:34.489+02:00 level=ERROR msg="Failed to execute SSH command" error="fork/exec /home/pzuser/rcon/rcon: no such file or directory" output="" operation=rconCmd
+time=2025-06-22T22:57:34.489+02:00 level=INFO msg="" counter=0
